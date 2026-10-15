@@ -1,0 +1,7 @@
+{
+  "name": "cypress-lab-cloud",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "test:e2e": "cypress run --browser electron" },
+  "devDependencies": { "cypress": "16.2.0" }
+}

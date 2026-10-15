@@ -1,0 +1,10 @@
+node_modules/
+.bridge-token
+.env
+.env.*
+!.env.example
+cypress.env.json
+cypress/screenshots/
+cypress/videos/
+CypressCache/
+*.log
