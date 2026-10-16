@@ -29,9 +29,15 @@ jobs:
         with:
           node-version: '22.23.3'
           package-manager-cache: false
-      - name: Install dependencies with bounded diagnostics
+      - name: Restore and validate pinned dependency snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/restore-reviewed-lock.cjs
+      - name: Install locked dependencies with bounded diagnostics
         id: install
-        run: node scripts/install-diagnostics.cjs
+        run: |
+          test -f package-lock.json
+          node scripts/install-diagnostics.cjs
       - name: Check fixed authorized homepage in Chrome
         id: tests
         run: >-
