@@ -31,10 +31,44 @@ jobs:
           package-manager-cache: false
       - name: Install dependencies
         id: install
-        run: npm install --no-audit --no-fund
+        run: |
+          if test -f package-lock.json; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+            echo '::warning::Lockfile generated for review; dependencies are not yet repository-locked.'
+          fi
       - name: Validate browser network and expected failure
         id: validation
         run: node scripts/launch-acceptance.cjs
+      - name: Preserve controlled diagnostic files
+        id: upload
+        if: ${{ always() && !cancelled() && steps.install.outcome == 'success' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: acceptance-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            acceptance-result.json
+            acceptance-network.jsonl
+            cypress/screenshots/acceptance/**/*.png
+            package-lock.json
+      - name: Download preserved evidence for round-trip verification
+        id: download
+        if: ${{ always() && !cancelled() && steps.upload.outcome == 'success' }}
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: acceptance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: restored-acceptance
+      - name: Verify restored screenshots and publish asset report
+        if: ${{ always() && !cancelled() && steps.install.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+          DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+        run: node scripts/acceptance-assets.cjs
       - name: Publish bounded acceptance report
         if: ${{ always() && !cancelled() && github.event_name == 'issues' }}
         env:

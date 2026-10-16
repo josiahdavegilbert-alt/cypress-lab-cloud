@@ -1,0 +1,7 @@
+# Remaining capability validation
+
+The controlled acceptance workflow preserves selected synthetic network evidence, the result JSON, generated failure screenshots and package-lock.json as a GitHub Actions artifact retained for seven days. It downloads that artifact to a separate directory and verifies screenshot sizes and SHA-256 hashes against the original report. It also checks the restored lockfile hash. This tests cloud artifact retrieval, not assistant visual inspection or competition-target readiness. Artifact availability follows repository permissions and expires after retention. Storage uses account allowance; do not change the account spending restriction.
+
+Until a reviewed package-lock.json is committed, installation still uses npm install and emits an explicit warning. Owner issue runs export the generated lockfile in gzip/base64 form, bounded to 40000 characters, with its uncompressed SHA-256 hash. Review the decoded JSON and package metadata before a separate approved commit. Once a lockfile exists, this workflow uses npm ci. The original smoke workflow still needs a separately reviewed switch to npm ci. No automatic repository writes, dependency commits, target selection or competition traffic are introduced.
+
+An explicitly approved issue titled [Cypress] Run acceptance starts one run. A successful acceptance test report and successful asset report are both required. Future authorized competition websites require reviewed target-specific specs and actual cloud reachability validation.
