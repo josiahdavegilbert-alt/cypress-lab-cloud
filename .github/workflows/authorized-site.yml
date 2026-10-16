@@ -1,0 +1,49 @@
+name: Authorized CTF homepage check
+on:
+  workflow_dispatch:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+concurrency:
+  group: cypress-cloud-smoke
+  cancel-in-progress: false
+jobs:
+  homepage:
+    if: >-
+      github.actor == 'josiahdavegilbert-alt' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.user.login == 'josiahdavegilbert-alt' &&
+       github.event.issue.title == '[Cypress] Check authorized homepage'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22.23.3'
+          package-manager-cache: false
+      - name: Install dependencies
+        id: install
+        run: |
+          if test -f package-lock.json; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - name: Check fixed authorized homepage in Chrome
+        id: tests
+        run: >-
+          npm run test:e2e --
+          --config-file cypress.acceptance.config.cjs
+          --spec cypress/targets/authorized.cy.js
+          --config 'specPattern=cypress/targets/**/*.cy.js,baseUrl=https://20260914.gm.neu-ctf.club,video=false,screenshotOnRunFailure=false,pageLoadTimeout=60000'
+      - name: Report metadata only
+        if: ${{ always() && !cancelled() && github.event_name == 'issues' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+        run: node scripts/report-authorized.cjs
