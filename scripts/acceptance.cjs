@@ -16,7 +16,8 @@ async function validate() {
   const http = require('node:http');
   const crypto = require('node:crypto');
   const cypress = require('cypress');
-  const evidence = [];
+  const evidenceFile = path.join(process.cwd(), 'acceptance-network.jsonl');
+  if (fs.existsSync(evidenceFile)) fs.unlinkSync(evidenceFile);
   let apiCalls = 0;
   const page = `<!doctype html><html><body><h1>Controlled lab</h1><input data-cy="name"><button data-cy="reveal">Reveal</button><div data-cy="result"></div><a data-cy="next" href="/next">Next</a><script>document.querySelector('button').onclick=async()=>{const name=document.querySelector('input').value;const r=await fetch('/api/clue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});const d=await r.json();document.querySelector('[data-cy=result]').textContent=d.name+': '+d.clue;};</script></body></html>`;
   const server = http.createServer((req, res) => {
@@ -34,8 +35,9 @@ async function validate() {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   const started = Date.now();
   try {
-    const results = await cypress.run({ browser: 'chrome', configFile: false, spec: 'cypress/acceptance/browser.cy.js', config: { video: false, retries: 0, screenshotOnRunFailure: true, screenshotsFolder: 'cypress/screenshots/acceptance', defaultCommandTimeout: 1500, e2e: { baseUrl: `http://127.0.0.1:${server.address().port}`, supportFile: false, setupNodeEvents(on) { on('task', { evidence(value) { evidence.push(value); return null; } }); } } } });
+    const results = await cypress.run({ browser: 'chrome', configFile: 'cypress.acceptance.config.cjs', spec: 'cypress/acceptance/browser.cy.js', config: { e2e: { baseUrl: `http://127.0.0.1:${server.address().port}` } } });
     if (!Array.isArray(results.runs)) throw new Error(results.message || 'Cypress did not produce run results');
+    const evidence = fs.existsSync(evidenceFile) ? fs.readFileSync(evidenceFile, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line)) : [];
     const tests = results.runs.flatMap(run => run.tests || []);
     const failures = tests.filter(test => test.state === 'failed');
     const screenshots = results.runs.flatMap(run => run.screenshots || []).filter(s => s.path && fs.existsSync(s.path)).map(s => ({ file: path.basename(s.path), bytes: fs.statSync(s.path).size, sha256: crypto.createHash('sha256').update(fs.readFileSync(s.path)).digest('hex') }));
