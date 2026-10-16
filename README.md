@@ -1,20 +1,20 @@
-# Cypress cloud lab
+# Cyber info — Cypress cloud lab
 
-Private, on-demand Cypress tests on GitHub-hosted Linux runners. No laptop or local tunnel is required for these jobs. This is not an always-on browser, VM, or MCP endpoint.
+Private on-demand browser tests for authorized CTF preparation and web projects. GitHub-hosted runners do not need the laptop, Windows bridge, or local tunnel. This is not a permanent browser or MCP web server.
 
-## Before the first run
-Verify the account's current GitHub Actions allowance and billing controls. Configure paid usage to be blocked before running jobs. A private repository consumes included runner minutes and storage; this workflow alone cannot guarantee zero charges.
+## Approved assistant execution path
+Open a new issue in this repository using the connected personal account with the exact title `[Cypress] Run smoke`. Creating that issue intentionally starts a cloud test and must receive explicit action confirmation. No URL, shell command, or spec path is accepted from issue content. The fixed smoke spec visits the public Cypress example page. Only the owner actor and owner-authored request are allowed. Edits, comments, pushes and schedules do not start tests. Manual workflow dispatch remains available to the owner.
 
-## Run
-Open Actions, select Cypress manual smoke test, and choose Run workflow on main. The workflow has no push or scheduled trigger. It uses a standard Ubuntu runner, a ten-minute job timeout, one concurrency group, no test retries, and one-day retention for failure screenshots. Read results in the run logs.
+After completion, the workflow posts the install/test step outcomes, run link, attempt and checked-out commit as an issue comment. The assistant can read the request issue and comments using the existing GitHub connector. Match the run and attempt; never treat old comments or missing reports as new success. Job setup failures, cancellation or timeout can prevent a report; inspect the Actions page in those cases. Issue-based reporting gives a summary, not direct full log or screenshot retrieval.
 
-## Contents and validation
-Cypress is pinned to 16.2.0. The smoke spec is a reconstruction of the demonstrated example-page workflow with an added heading assertion, not a retrieved copy of the local file. No test execution is claimed by this commit. Dependencies are installed using npm install because a validated package-lock.json has not yet been generated. Add a reviewed lockfile and switch to npm ci after validation. Third-party actions use major release tags, not immutable commit pins.
+## Limits and costs
+Keep the account Actions budget at $0 with usage blocking. No paid runner is configured. Jobs use Ubuntu 24.04, Node 22.23.3, pinned action commits, Cypress 16.2.0, Chrome, a ten-minute timeout and a single concurrency group. Each execution consumes included usage. Budget controls can block execution; never raise them to make a job run. No claim of unlimited free usage or guaranteed uptime is made. Do not leave tests running to host a server.
 
-## Migration boundaries
-No local files were deleted. Do not upload .bridge-token, passwords, .env files, cypress.env.json, browser profiles, node_modules, or binary caches. Gitignore patterns do not remove secrets already tracked. Inspect any additional local specs and configuration before transferring them. The Windows read-only bridge remains local and is not deployed by this repository.
+## Validation and reproducibility
+The earlier Electron/manual workflow passed. The Chrome/issue-triggered replacement is untested until run. Cypress is pinned but transitive dependencies are not yet locked. A reviewed package-lock.json and npm ci are still needed for full dependency reproducibility. No lockfile was invented. No full local-file migration is claimed.
 
-## Assistant integration
-The currently discovered GitHub connector supports repository file operations but does not expose Actions workflow dispatch or run-log tools. Manual dispatch works independently of the laptop; direct assistant dispatch and result retrieval require another supported authenticated integration. Never use repository commits as a hidden substitute for approved workflow dispatch.
+## Security and scope
+Issue text is untrusted data, never executable code. No credentials are supplied to the test step as environment variables. GITHUB_TOKEN is explicitly passed only to the report step and checkout credentials are not persisted. Repository workflows and code must still be reviewed because they execute with repository-level job permissions. The fixed public example is the only current target. Add future authorized challenge specs through reviewed and confirmed commits; do not accept arbitrary remote URLs, commands, or code in issue requests. Avoid publishing private artifacts or secrets in logs/comments. Do not upload .bridge-token, .env, cypress.env.json, node_modules, browser profiles or caches.
 
-Only test authorized targets. Private VPN-only challenges require separately approved network connectivity. Do not publish challenge data or credentials.
+## Remaining work
+Validate Chrome execution and issue reporting, then add a reviewed lockfile and category-appropriate authorized tests. The old laptop connector remains separate; it can be stopped or removed independently after this path is validated. No direct Actions dispatch/log tools are claimed.
