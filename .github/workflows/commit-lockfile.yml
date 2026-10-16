@@ -1,39 +1,13 @@
-name: Commit verified dependency lockfile
+name: Retired lockfile bootstrap
 on:
   workflow_dispatch:
-  issues:
-    types: [opened]
 permissions:
   contents: read
-concurrency:
-  group: cypress-cloud-smoke
-  cancel-in-progress: false
 jobs:
-  commit-lock:
-    if: >-
-      github.actor == 'josiahdavegilbert-alt' &&
-      (github.event_name == 'workflow_dispatch' ||
-      (github.event.issue.user.login == 'josiahdavegilbert-alt' &&
-       github.event.issue.title == '[Cypress] Commit verified lockfile'))
+  retired:
+    if: github.actor == 'josiahdavegilbert-alt'
     runs-on: ubuntu-24.04
-    timeout-minutes: 3
-    permissions:
-      contents: write
-      issues: write
+    timeout-minutes: 1
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: main
-          persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
-        with:
-          node-version: '22.23.3'
-          package-manager-cache: false
-      - name: Restore hash-verified dependency snapshot
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node scripts/restore-reviewed-lock.cjs
-      - name: Commit only the exact verified lockfile and report
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node scripts/commit-verified-lock.cjs
+      - name: Bootstrap retired
+        run: echo 'The verified package-lock.json is committed. This workflow no longer writes repository contents. Use reviewed dependency updates and npm ci validation.'

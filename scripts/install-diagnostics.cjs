@@ -1,10 +1,10 @@
 const fs = require('node:fs');
 const { spawnSync } = require('node:child_process');
-const command = fs.existsSync('package-lock.json') ? 'ci' : 'install';
+const command = 'ci';
 const result = spawnSync('npm', [command, '--no-audit', '--no-fund'], { encoding: 'utf8', timeout: 300000, maxBuffer: 4 * 1024 * 1024, env: process.env });
 const raw = `${result.stdout || ''}\n${result.stderr || ''}`;
 process.stdout.write(raw);
 const clean = raw.replace(/\u001b\[[0-9;]*m/g, '').replace(/https?:\/\/[^\s<>"']+/g, '[URL redacted]').replace(/(?:gh[pousr]_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+|Bearer\s+[^\s]+)/gi, '[credential redacted]').replace(/((?:token|password|authorization|_auth)\s*[=:]\s*)[^\s,;]+/gi, '$1[redacted]').replace(/```/g, '[code fence]');
-const summary = { command: `npm ${command} --no-audit --no-fund`, success: result.status === 0, exitStatus: result.status, signal: result.signal, launcherError: result.error?.code || null, diagnosticTail: result.status === 0 ? 'Install succeeded.' : clean.slice(-6000), scope: 'Dependency-install output only; generated before visiting the CTF. URLs and common credential patterns redacted. No npm debug-file upload.' };
+const summary = { command: `npm ${command} --no-audit --no-fund`, success: result.status === 0, exitStatus: result.status, signal: result.signal, launcherError: result.error?.code || null, diagnosticTail: result.status === 0 ? 'Install succeeded.' : clean.slice(-6000), scope: 'Dependency-install output only; generated before browser tests. URLs and common credential patterns redacted. No npm debug-file upload. No unlocked fallback.' };
 fs.writeFileSync('install-diagnostic.json', JSON.stringify(summary, null, 2));
 process.exitCode = result.status === 0 ? 0 : 1;

@@ -1,7 +1,11 @@
-# Remaining capability validation
+# Locked workflow status
 
-The controlled acceptance workflow preserves selected synthetic network evidence, the result JSON, generated failure screenshots and package-lock.json as a GitHub Actions artifact retained for seven days. It downloads that artifact to a separate directory and verifies screenshot sizes and SHA-256 hashes against the original report. It also checks the restored lockfile hash. This tests cloud artifact retrieval, not assistant visual inspection or competition-target readiness. Artifact availability follows repository permissions and expires after retention. Storage uses account allowance; do not change the account spending restriction.
+The complete package-lock.json was committed in 367c571a9cace836f6148abfed5cd57e11007eac and hash-verified against the tested snapshot. All three test workflows now use scripts/install-diagnostics.cjs, which runs only npm ci --no-audit --no-fund. Missing or inconsistent lockfiles must fail; no npm install fallback exists. The homepage workflow no longer restores dependency data from issue comments.
 
-Until a reviewed package-lock.json is committed, installation still uses npm install and emits an explicit warning. Owner issue runs export the generated lockfile in gzip/base64 form, bounded to 40000 characters, with its uncompressed SHA-256 hash. Review the decoded JSON and package metadata before a separate approved commit. Once a lockfile exists, this workflow uses npm ci. The original smoke workflow still needs a separately reviewed switch to npm ci. No automatic repository writes, dependency commits, target selection or competition traffic are introduced.
+The lockfile bootstrap workflow is retired: manual dispatch only, read-only contents permission, and no repository write step. Its former scripts remain unused historical helpers and are not invoked by any active workflow. Dependency version changes require a separate reviewed manifest/lockfile update and clean-install tests.
 
-An explicitly approved issue titled [Cypress] Run acceptance starts one run. A successful acceptance test report and successful asset report are both required. Future authorized competition websites require reviewed target-specific specs and actual cloud reachability validation.
+Controlled acceptance retains synthetic diagnostics and screenshots for seven days and verifies downloaded screenshot sizes and hashes. This is cloud artifact retrieval, not assistant visual inspection. Older result limitation text about missing repository locking is historical and superseded by the committed lockfile; it is not a live repository status check.
+
+The authorized homepage check remains limited to https://20260914.gm.neu-ctf.club/ and ordinary page resources, with screenshots/video disabled and no clicks, submissions, crawling or challenge attempts. The earlier homepage check passed, but the workflow cleanup must be rerun before claiming the new revision verified.
+
+Acceptance, smoke and authorized homepage reruns each require separate explicit approval. No push or schedule trigger, billing changes or automatic competition traffic are added.
