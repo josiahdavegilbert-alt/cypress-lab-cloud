@@ -34,7 +34,7 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Validate browser network and expected failure
         id: validation
-        run: node scripts/acceptance.cjs
+        run: node scripts/launch-acceptance.cjs
       - name: Publish bounded acceptance report
         if: ${{ always() && !cancelled() && github.event_name == 'issues' }}
         env:
