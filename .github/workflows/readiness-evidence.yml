@@ -1,0 +1,56 @@
+name: Controlled readiness evidence
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cypress-cloud-smoke
+  cancel-in-progress: false
+jobs:
+  readiness:
+    if: github.actor == 'josiahdavegilbert-alt' && github.triggering_actor == 'josiahdavegilbert-alt' && github.repository == 'josiahdavegilbert-alt/cypress-lab-cloud'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22.23.3'
+          package-manager-cache: false
+      - name: Test controlled fixtures and evidence policies
+        run: node --test scripts/tests/*.test.cjs
+      - name: Record tracked lockfile
+        run: |
+          git ls-files --error-unmatch package-lock.json
+          sha256sum package-lock.json > "$RUNNER_TEMP/readiness-lock.sha256"
+      - name: Install only locked dependencies
+        run: node scripts/install-diagnostics.cjs
+      - name: Verify lockfile after installation
+        run: sha256sum --check "$RUNNER_TEMP/readiness-lock.sha256"
+      - name: Execute two fixed Chrome rehearsals
+        run: node scripts/run-rehearsal.cjs
+      - name: Independently evaluate source evidence
+        run: node scripts/rehearsal-readiness.cjs rehearsal-output
+      - name: Preserve private controlled evidence
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: controlled-readiness-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            rehearsal-output/
+            install-diagnostic.json
+      - name: Download same-run evidence
+        if: ${{ success() }}
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: controlled-readiness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .readiness-downloaded
+      - name: Independently verify downloaded evidence and lockfile
+        if: ${{ success() }}
+        run: |
+          node scripts/rehearsal-readiness.cjs .readiness-downloaded/rehearsal-output
+          sha256sum --check "$RUNNER_TEMP/readiness-lock.sha256"
