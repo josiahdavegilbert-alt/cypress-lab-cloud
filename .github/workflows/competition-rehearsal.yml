@@ -1,0 +1,55 @@
+name: Controlled competition rehearsal
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cypress-cloud-smoke
+  cancel-in-progress: false
+jobs:
+  rehearsal:
+    if: github.actor == 'josiahdavegilbert-alt'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22.23.3'
+          package-manager-cache: false
+      - name: Unit-test fixtures and verdict policies
+        run: node --test scripts/tests/*.test.cjs
+      - name: Record committed lockfile
+        run: |
+          git ls-files --error-unmatch package-lock.json
+          sha256sum package-lock.json > "$RUNNER_TEMP/rehearsal-lock.sha256"
+      - name: Install locked dependencies
+        run: node scripts/install-diagnostics.cjs
+      - name: Verify lock unchanged
+        run: sha256sum --check "$RUNNER_TEMP/rehearsal-lock.sha256"
+      - name: Rehearse twice in Chrome without retries
+        run: node scripts/run-rehearsal.cjs
+      - name: Preserve controlled evidence
+        id: evidence
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: competition-rehearsal-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            rehearsal-output/
+            install-diagnostic.json
+      - name: Retrieve uploaded evidence
+        if: ${{ success() }}
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: competition-rehearsal-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .rehearsal-downloaded
+      - name: Verify downloaded identity, files and lockfile
+        if: ${{ success() }}
+        run: |
+          node scripts/verify-rehearsal-artifact.cjs
+          sha256sum --check "$RUNNER_TEMP/rehearsal-lock.sha256"
